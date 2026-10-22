@@ -10,6 +10,7 @@ jobs:
       - name: Распаковать самый свежий zip
         run: |
           ZIP="$(ls -t *.zip | head -1)"
+          echo "ZIP=$ZIP"
           unzip -q "$ZIP" -d src
       - name: Найти проект
         id: p
@@ -19,15 +20,16 @@ jobs:
       - name: Починить код
         run: |
           echo "--- до правки ---"
-          grep -rn "matchParentSize" src --include=*.kt || true
-          find src -name '*.kt' -exec sed -i -E 's/matchParentSize\([^)]*\)/fillMaxSize()/g' {} +
+          grep -rn "matchParentSize" src || true
+          find src -name '*.kt' -exec sed -i 's/matchParentSize/fillMaxSize/g' {} +
           for f in $(grep -rl "fillMaxSize" src --include=*.kt); do
             if ! grep -qE "import androidx.compose.foundation.layout.(fillMaxSize|\*)" "$f"; then
               sed -i '0,/^package .*/s//&\n\nimport androidx.compose.foundation.layout.fillMaxSize/' "$f"
             fi
           done
           echo "--- после правки ---"
-          grep -rn "matchParentSize" src --include=*.kt || echo "matchParentSize больше нет"
+          grep -rn "matchParentSize" src || echo "matchParentSize больше нет"
+          sed -n '21p' "$(find src -name ChatScreen.kt | head -1)"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
