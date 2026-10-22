@@ -16,6 +16,15 @@ jobs:
         run: |
           S="$(find src -name settings.gradle.kts | head -1)"
           echo "dir=$(dirname "$S")" >> "$GITHUB_OUTPUT"
+      - name: Починить код
+        run: |
+          F1="$(find src -name ChatScreen.kt | head -1)"
+          F2="$(find src -name Screens.kt | head -1)"
+          sed -i '21s/\.matchParentSize()/.fillMaxSize()/' "$F1"
+          sed -i '16s/\.matchParentSize()/.fillMaxSize()/' "$F2"
+          for f in "$F1" "$F2"; do
+            grep -qF "import androidx.compose.foundation.layout.fillMaxSize" "$f" || sed -i '0,/^package .*/s//&\n\nimport androidx.compose.foundation.layout.fillMaxSize/' "$f"
+          done
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
