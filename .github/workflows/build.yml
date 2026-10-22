@@ -18,13 +18,16 @@ jobs:
           echo "dir=$(dirname "$S")" >> "$GITHUB_OUTPUT"
       - name: Починить код
         run: |
-          F1="$(find src -name ChatScreen.kt | head -1)"
-          F2="$(find src -name Screens.kt | head -1)"
-          sed -i '21s/\.matchParentSize()/.fillMaxSize()/' "$F1"
-          sed -i '16s/\.matchParentSize()/.fillMaxSize()/' "$F2"
-          for f in "$F1" "$F2"; do
-            grep -qF "import androidx.compose.foundation.layout.fillMaxSize" "$f" || sed -i '0,/^package .*/s//&\n\nimport androidx.compose.foundation.layout.fillMaxSize/' "$f"
+          echo "--- до правки ---"
+          grep -rn "matchParentSize" src --include=*.kt || true
+          find src -name '*.kt' -exec sed -i -E 's/matchParentSize\([^)]*\)/fillMaxSize()/g' {} +
+          for f in $(grep -rl "fillMaxSize" src --include=*.kt); do
+            if ! grep -qE "import androidx.compose.foundation.layout.(fillMaxSize|\*)" "$f"; then
+              sed -i '0,/^package .*/s//&\n\nimport androidx.compose.foundation.layout.fillMaxSize/' "$f"
+            fi
           done
+          echo "--- после правки ---"
+          grep -rn "matchParentSize" src --include=*.kt || echo "matchParentSize больше нет"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
